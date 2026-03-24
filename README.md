@@ -988,15 +988,15 @@ class ToolTest < ActiveSupport::TestCase
   include ActionMCP::TestHelper
 
   test "CalculateSumTool returns the correct sum" do
-    assert_tool_findable("calculate_sum")
-    result = execute_tool("calculate_sum", a: 5, b: 10)
-    assert_tool_output(result, "15.0")
+    assert_mcp_tool_findable("calculate_sum")
+    result = execute_mcp_tool("calculate_sum", a: 5, b: 10)
+    assert_mcp_tool_output("15.0", result)
   end
 
   test "AnalyzeCodePrompt returns the correct analysis" do
-    assert_prompt_findable("analyze_code")
-    result = execute_prompt("analyze_code", language: "Ruby", code: "def hello; puts 'Hello, world!'; end")
-    assert_equal "Analyzing Ruby code: def hello; puts 'Hello, world!'; end", assert_prompt_output(result)
+    assert_mcp_prompt_findable("analyze_code")
+    result = execute_mcp_prompt("analyze_code", language: "Ruby", code: "def hello; puts 'Hello, world!'; end")
+    assert_mcp_prompt_output("Analyzing Ruby code: def hello; puts 'Hello, world!'; end", result)
   end
 end
 ```
@@ -1007,8 +1007,8 @@ The TestHelper provides several assertion methods:
 - `execute_mcp_tool(name, **args)` - Executes a tool with arguments and asserts success
 - `execute_mcp_tool_with_error(name, **args)` - Executes a tool without asserting success (for testing error cases)
 - `execute_mcp_prompt(name, **args)` - Executes a prompt with arguments
-- `assert_mcp_tool_output(result, expected)` - Asserts tool output matches expected content
-- `assert_mcp_prompt_output(result, expected)` - Asserts prompt output matches expected content
+- `assert_mcp_tool_output(expected, response)` - Asserts tool output matches expected content
+- `assert_mcp_prompt_output(expected, response)` - Asserts prompt output matches expected content
 - `assert_mcp_error_code(code, response)` - Asserts a specific JSON-RPC error code
 
 ### Testing Resource Templates
@@ -1019,7 +1019,7 @@ Resource templates don't have a dedicated test helper yet. Test them by instanti
 class ProductResourceTemplateTest < ActiveSupport::TestCase
   test "resolves a product resource" do
     product = Product.create!(name: "Widget", price: 9.99)
-    template = ProductResourceTemplate.new(id: product.id.to_s)
+    template = ProductResourceTemplate.new(product_id: product.id.to_s)
 
     assert template.valid?
     resource = template.resolve
