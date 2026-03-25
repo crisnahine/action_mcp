@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 class ConsolidatedMigration < ActiveRecord::Migration[8.1]
-  def change
-    create_table :action_mcp_sessions, id: :string do |t|
+  def up
+    create_table :action_mcp_sessions, id: :string, if_not_exists: true do |t|
       t.string :role, null: false, default: "server", comment: "The role of the session"
       t.string :status, null: false, default: "pre_initialize"
       t.datetime :ended_at, comment: "The time the session ended"
@@ -21,7 +21,10 @@ class ConsolidatedMigration < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    create_table :action_mcp_session_messages do |t|
+    add_column :action_mcp_sessions, :consents, :json, default: {}, null: false unless column_exists?(:action_mcp_sessions, :consents)
+    add_column :action_mcp_sessions, :session_data, :json, default: {}, null: false unless column_exists?(:action_mcp_sessions, :session_data)
+
+    create_table :action_mcp_session_messages, if_not_exists: true do |t|
       t.references :session, null: false,
                              foreign_key: { to_table: :action_mcp_sessions,
                                             on_delete: :cascade,
@@ -38,7 +41,11 @@ class ConsolidatedMigration < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    create_table :action_mcp_session_subscriptions do |t|
+    add_column :action_mcp_session_messages, :is_ping, :boolean, default: false, null: false unless column_exists?(:action_mcp_session_messages, :is_ping)
+    add_column :action_mcp_session_messages, :request_acknowledged, :boolean, default: false, null: false unless column_exists?(:action_mcp_session_messages, :request_acknowledged)
+    add_column :action_mcp_session_messages, :request_cancelled, :boolean, default: false, null: false unless column_exists?(:action_mcp_session_messages, :request_cancelled)
+
+    create_table :action_mcp_session_subscriptions, if_not_exists: true do |t|
       t.references :session, null: false,
                              foreign_key: { to_table: :action_mcp_sessions, on_delete: :cascade },
                              type: :string
@@ -47,7 +54,7 @@ class ConsolidatedMigration < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    create_table :action_mcp_session_tasks, id: :string do |t|
+    create_table :action_mcp_session_tasks, id: :string, if_not_exists: true do |t|
       t.references :session, null: false,
                              foreign_key: { to_table: :action_mcp_sessions,
                                             on_delete: :cascade,
@@ -73,5 +80,24 @@ class ConsolidatedMigration < ActiveRecord::Migration[8.1]
       t.index %i[session_id status]
       t.index :created_at
     end
+
+    add_column :action_mcp_session_tasks, :continuation_state, :json, default: {} unless column_exists?(:action_mcp_session_tasks, :continuation_state)
+    add_column :action_mcp_session_tasks, :progress_percent, :integer unless column_exists?(:action_mcp_session_tasks, :progress_percent)
+    add_column :action_mcp_session_tasks, :progress_message, :string unless column_exists?(:action_mcp_session_tasks, :progress_message)
+    add_column :action_mcp_session_tasks, :last_step_at, :datetime unless column_exists?(:action_mcp_session_tasks, :last_step_at)
+
+    # Remove deprecated tables if they exist
+    drop_table :action_mcp_oauth_clients, if_exists: true
+    drop_table :action_mcp_oauth_tokens, if_exists: true
+    drop_table :action_mcp_sse_events, if_exists: true
+    drop_table :action_mcp_session_resources, if_exists: true
+
+    # Remove deprecated columns if they exist
+    remove_column :action_mcp_sessions, :oauth_access_token if column_exists?(:action_mcp_sessions, :oauth_access_token)
+    remove_column :action_mcp_sessions, :oauth_refresh_token if column_exists?(:action_mcp_sessions, :oauth_refresh_token)
+    remove_column :action_mcp_sessions, :oauth_token_expires_at if column_exists?(:action_mcp_sessions, :oauth_token_expires_at)
+    remove_column :action_mcp_sessions, :oauth_user_context if column_exists?(:action_mcp_sessions, :oauth_user_context)
+    remove_column :action_mcp_sessions, :sse_event_counter if column_exists?(:action_mcp_sessions, :sse_event_counter)
   end
+
 end
