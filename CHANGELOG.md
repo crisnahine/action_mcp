@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.108.0](https://github.com/seuros/action_mcp/compare/action_mcp/v0.107.1...action_mcp/v0.108.0) (2026-04-08)
+
+
+### Features
+
+* add resource template test helpers ([f547429](https://github.com/seuros/action_mcp/commit/f5474291cbe0303d858217160cadd18e645a0435))
+
+
+### Bug Fixes
+
+* **docs:** correct TestHelper method names and argument order ([f83bce6](https://github.com/seuros/action_mcp/commit/f83bce62002d8d0ea7ea1a206839734621c478af))
+* guard against nil session when client sends unknown Mcp-Session-Id on initialize ([c47b7e7](https://github.com/seuros/action_mcp/commit/c47b7e75170d25268f3592f1e939f93389213579))
+* guard against nil session when client sends unknown Mcp-Session-Id on initialize ([0d24a8b](https://github.com/seuros/action_mcp/commit/0d24a8be92ad1bd4c4ae3baa5ecfa7205201db68))
+* handle wildcard registry in register/unregister methods ([34fe999](https://github.com/seuros/action_mcp/commit/34fe9991d35bb96163c7f887c79f2eb65e26cbfa))
+* handle wildcard registry in register/unregister methods ([65dc921](https://github.com/seuros/action_mcp/commit/65dc9217fca77a0340bf0ce66c8679cd6d0dff57))
+
 ## [0.107.1](https://github.com/seuros/action_mcp/compare/action_mcp/v0.107.0...action_mcp/v0.107.1) (2026-03-19)
 
 
