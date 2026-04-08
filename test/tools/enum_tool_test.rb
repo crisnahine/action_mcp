@@ -46,7 +46,6 @@ class EnumToolTest < ActiveSupport::TestCase
 
   test "handles nil input" do
     @tool.fruit = nil
-    # Since FloatArrayType casts nil to [], this should be valid
     assert_not @tool.valid?
     assert_nil @tool.fruit
   end

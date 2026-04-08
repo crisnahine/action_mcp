@@ -41,8 +41,8 @@ class EnumArrayToolTest < ActiveSupport::TestCase
     required = schema[:required] || schema["required"]
     assert required
 
-    # Check enum values
-    enum_values = schema[:properties]["fruits"][:enum]
+    # Check enum values are on items, not on the array itself
+    enum_values = items[:enum] || items["enum"]
     assert_equal [ "apple", "banana", "cherry" ], enum_values
   end
 

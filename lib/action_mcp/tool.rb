@@ -341,9 +341,10 @@ module ActionMCP
     def self.collection(prop_name, type:, description: nil, required: false, default: [], **opts)
       raise ArgumentError, "Type is required for a collection" if type.nil?
 
-      collection_definition = { type: "array", items: { type: type } }
+      items_definition = { type: type }
+      items_definition[:enum] = opts[:enum] if opts[:enum]
+      collection_definition = { type: "array", items: items_definition }
       collection_definition[:description] = description if description && !description.empty?
-      collection_definition.merge!(opts) if opts.any?
 
       self._schema_properties = _schema_properties.merge(prop_name.to_s => collection_definition)
       new_required = _required_properties.dup
