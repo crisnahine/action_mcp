@@ -99,5 +99,4 @@ class ConsolidatedMigration < ActiveRecord::Migration[8.1]
     remove_column :action_mcp_sessions, :oauth_user_context if column_exists?(:action_mcp_sessions, :oauth_user_context)
     remove_column :action_mcp_sessions, :sse_event_counter if column_exists?(:action_mcp_sessions, :sse_event_counter)
   end
-
 end
