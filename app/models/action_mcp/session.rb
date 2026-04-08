@@ -172,6 +172,7 @@ module ActionMCP
     def register_tool(tool_class_or_name)
       tool_name = normalize_name(tool_class_or_name, :tool)
       return false unless tool_exists?(tool_name)
+      return true if uses_all_tools?
 
       self.tool_registry ||= []
       unless self.tool_registry.include?(tool_name)
@@ -184,8 +185,13 @@ module ActionMCP
 
     def unregister_tool(tool_class_or_name)
       tool_name = normalize_name(tool_class_or_name, :tool)
-      self.tool_registry ||= []
 
+      if uses_all_tools?
+        return unless tool_exists?(tool_name)
+        expand_tool_registry!
+      end
+
+      self.tool_registry ||= []
       return unless self.tool_registry.delete(tool_name)
 
       save!
@@ -195,6 +201,7 @@ module ActionMCP
     def register_prompt(prompt_class_or_name)
       prompt_name = normalize_name(prompt_class_or_name, :prompt)
       return false unless prompt_exists?(prompt_name)
+      return true if uses_all_prompts?
 
       self.prompt_registry ||= []
       unless self.prompt_registry.include?(prompt_name)
@@ -207,8 +214,13 @@ module ActionMCP
 
     def unregister_prompt(prompt_class_or_name)
       prompt_name = normalize_name(prompt_class_or_name, :prompt)
-      self.prompt_registry ||= []
 
+      if uses_all_prompts?
+        return unless prompt_exists?(prompt_name)
+        expand_prompt_registry!
+      end
+
+      self.prompt_registry ||= []
       return unless self.prompt_registry.delete(prompt_name)
 
       save!
@@ -218,6 +230,7 @@ module ActionMCP
     def register_resource_template(template_class_or_name)
       template_name = normalize_name(template_class_or_name, :resource_template)
       return false unless resource_template_exists?(template_name)
+      return true if uses_all_resources?
 
       self.resource_registry ||= []
       unless self.resource_registry.include?(template_name)
@@ -230,8 +243,13 @@ module ActionMCP
 
     def unregister_resource_template(template_class_or_name)
       template_name = normalize_name(template_class_or_name, :resource_template)
-      self.resource_registry ||= []
 
+      if uses_all_resources?
+        return unless resource_template_exists?(template_name)
+        expand_resource_registry!
+      end
+
+      self.resource_registry ||= []
       return unless self.resource_registry.delete(template_name)
 
       save!
@@ -346,6 +364,20 @@ module ActionMCP
       self.tool_registry = [ "*" ]
       self.prompt_registry = [ "*" ]
       self.resource_registry = [ "*" ]
+    end
+
+    # Expand wildcard registries to explicit name lists so individual
+    # entries can be removed without breaking the wildcard check.
+    def expand_tool_registry!
+      self.tool_registry = ActionMCP.configuration.filtered_tools.map(&:name)
+    end
+
+    def expand_prompt_registry!
+      self.prompt_registry = ActionMCP.configuration.filtered_prompts.map(&:name)
+    end
+
+    def expand_resource_registry!
+      self.resource_registry = ActionMCP.configuration.filtered_resources.map(&:name)
     end
 
     def normalize_name(class_or_name, type)
