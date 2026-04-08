@@ -100,5 +100,50 @@ module ActionMCP
       # Verify instructions are not present
       refute payload.key?(:instructions)
     end
+
+    test "register_tool is a no-op on wildcard registry" do
+      session = Session.create
+      assert_equal [ "*" ], session.tool_registry
+
+      tool_count = session.registered_tools.count
+      assert tool_count > 1
+
+      session.register_tool(session.registered_tools.first.tool_name)
+      assert_equal [ "*" ], session.tool_registry
+      assert_equal tool_count, session.registered_tools.count
+    end
+
+    test "unregister_tool expands wildcard before removing" do
+      session = Session.create
+      assert_equal [ "*" ], session.tool_registry
+
+      all_tools = session.registered_tools
+      tool_to_remove = all_tools.first.tool_name
+
+      session.unregister_tool(tool_to_remove)
+      refute_includes session.tool_registry, "*"
+      refute_includes session.tool_registry, tool_to_remove
+      assert_equal all_tools.count - 1, session.registered_tools.count
+    end
+
+    test "unregister_tool preserves wildcard when tool does not exist" do
+      session = Session.create
+      assert_equal [ "*" ], session.tool_registry
+
+      session.unregister_tool("nonexistent_tool_xyz")
+      assert_equal [ "*" ], session.tool_registry
+      assert session.uses_all_tools?
+    end
+
+    test "register_tool works normally on explicit registry" do
+      session = Session.create
+      session.tool_registry = []
+      session.save!
+
+      tool_name = ActionMCP.configuration.filtered_tools.first.name
+      assert session.register_tool(tool_name)
+      assert_includes session.tool_registry, tool_name
+      assert_equal 1, session.registered_tools.count
+    end
   end
 end
