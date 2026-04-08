@@ -15,6 +15,7 @@
 * guard against nil session when client sends unknown Mcp-Session-Id on initialize ([0d24a8b](https://github.com/seuros/action_mcp/commit/0d24a8be92ad1bd4c4ae3baa5ecfa7205201db68))
 * handle wildcard registry in register/unregister methods ([34fe999](https://github.com/seuros/action_mcp/commit/34fe9991d35bb96163c7f887c79f2eb65e26cbfa))
 * handle wildcard registry in register/unregister methods ([65dc921](https://github.com/seuros/action_mcp/commit/65dc9217fca77a0340bf0ce66c8679cd6d0dff57))
+* remove extra empty line to satisfy rubocop ([ca75f13](https://github.com/seuros/action_mcp/commit/ca75f130a7b3c92932b22b3355809816983a807c))
 
 ## [0.107.1](https://github.com/seuros/action_mcp/compare/action_mcp/v0.107.0...action_mcp/v0.107.1) (2026-03-19)
 
