@@ -117,4 +117,24 @@ class EnumArrayToolTest < ActiveSupport::TestCase
     assert_not result.is_error
     assert_equal "apple, banana, cherry", result.contents.first.text
   end
+
+  test "non-required collection still validates enum" do
+    tool_class = Class.new(ApplicationMCPTool) do
+      tool_name "optional_enum_array"
+      description "optional enum array"
+      collection :tags, type: "string", enum: [ "red", "green", "blue" ]
+
+      def perform
+        render text: tags.join(", ")
+      end
+    end
+
+    tool = tool_class.new
+    tool.tags = [ "red", "yellow" ]
+    assert_not tool.valid?
+    assert tool.errors[:tags].any? { |e| e.include?("yellow") }
+
+    tool.tags = [ "red", "green" ]
+    assert tool.valid?
+  end
 end

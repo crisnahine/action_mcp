@@ -359,12 +359,12 @@ module ActionMCP
       end
 
       attribute prop_name, mapped_type, default: default
+      validates_with ArrayEnumValidator, prop_name:, enum: opts[:enum] if opts[:enum]
 
       # For arrays, we need to check if the attribute is nil, not if it's empty
       return unless required
 
-      validates prop_name, presence: true, allow_nil: !required, unless: -> { send(prop_name).is_a?(Array) }
-      validates_with ArrayEnumValidator, prop_name:, enum: opts[:enum] if opts[:enum]
+      validates prop_name, presence: true, unless: -> { send(prop_name).is_a?(Array) }
 
       validate do
         errors.add(prop_name, "can't be blank") if send(prop_name).nil?
