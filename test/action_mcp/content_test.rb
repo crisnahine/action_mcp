@@ -80,6 +80,12 @@ module ActionMCP
         resource_full = Resource.new(uri, mime_type, text: text_content, blob: blob_content)
         expected_full = { type: "resource", resource: { uri: uri, mimeType: mime_type, text: text_content, blob: blob_content } }
         assert_equal expected_full, resource_full.to_h
+
+        # meta is emitted on the inner resource hash as `_meta`, not the outer envelope
+        meta = { ui: { prefersBorder: true } }
+        resource_with_meta = Resource.new(uri, mime_type, text: text_content, meta: meta)
+        assert_equal meta, resource_with_meta.to_h[:resource][:_meta]
+        refute resource_with_meta.to_h.key?(:_meta)
       end
 
       test "Resource content supports annotations" do
