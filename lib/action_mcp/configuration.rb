@@ -407,6 +407,11 @@ module ActionMCP
       if config.key?("pagination_page_size")
         self.pagination_page_size = config["pagination_page_size"]
       end
+
+      # Extract allowed origins for DNS rebinding protection
+      if config["allowed_origins"]
+        @allowed_origins = Array(config["allowed_origins"])
+      end
     end
 
     def should_include_all?(type)

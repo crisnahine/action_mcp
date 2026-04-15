@@ -326,6 +326,8 @@ module ActionMCP
       return unless origin.present?
       return if origin_allowed?(origin)
 
+      # id must be nil here per the MCP spec: Origin validation fires before the
+      # request body is parsed, so there is no request id to echo back.
       render json: { jsonrpc: "2.0", id: nil, error: { code: -32_600, message: "Forbidden: invalid Origin header" } },
              status: :forbidden
     end
@@ -336,19 +338,24 @@ module ActionMCP
       uri = URI.parse(origin)
       return false unless uri.host.present?
 
+      # URI.parse wraps IPv6 addresses in brackets: "http://[::1]" → host "[::1]".
+      # Normalize both sides so allowed_origins entries like "::1" match correctly.
+      origin_host = uri.host.delete_prefix("[").delete_suffix("]")
+
       allowed = ActionMCP.configuration.allowed_origins
       if allowed.present?
         allowed.any? do |pattern|
           case pattern
-          when Regexp then pattern.match?(uri.host)
-          when String then uri.host.casecmp?(pattern)
+          when Regexp then pattern.match?(origin_host)
+          when String then origin_host.casecmp?(pattern.delete_prefix("[").delete_suffix("]"))
           end
         end
       else
         # Default: origin host must match the server's own host.
         # This stops cross-origin browser requests (the DNS rebinding vector) while
         # allowing same-host origins regardless of scheme or port.
-        uri.host.casecmp?(request.host)
+        server_host = request.host.delete_prefix("[").delete_suffix("]")
+        origin_host.casecmp?(server_host)
       end
     rescue URI::InvalidURIError
       false

@@ -169,6 +169,43 @@ class OriginValidationTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  test "canonical DNS rebinding: blocks evil.com origin targeting localhost" do
+    # DNS rebinding attack: attacker page at evil.com rebinds its domain to 127.0.0.1,
+    # then fetches http://evil.com:3000/ (which reaches the local server).
+    # Browser sends Host: evil.com but Origin: http://evil.com.
+    # With ActionDispatch::HostAuthorization, Host: evil.com is blocked.
+    # With verify_origin, even if Host passes, Origin: evil.com != localhost → blocked.
+    get "/", headers: { "HOST" => "localhost", "Origin" => "http://evil.com" }
+    assert_response :forbidden
+  end
+
+  test "allows same-host origin on localhost" do
+    get "/", headers: { "HOST" => "localhost", "Origin" => "http://localhost" }
+    assert_response :method_not_allowed
+  end
+
+  test "allows same-host origin on localhost with port" do
+    get "/", headers: { "HOST" => "localhost", "Origin" => "http://localhost:3000" }
+    assert_response :method_not_allowed
+  end
+
+  test "IPv6: allows same-host origin" do
+    get "/", headers: { "HOST" => "[::1]", "Origin" => "http://[::1]" }
+    assert_response :method_not_allowed
+  end
+
+  test "IPv6: blocks different origin when server is on IPv6 loopback" do
+    get "/", headers: { "HOST" => "[::1]", "Origin" => "http://evil.com" }
+    assert_response :forbidden
+  end
+
+  test "IPv6 allowed_origins: entry without brackets matches bracketed uri.host" do
+    ActionMCP.configuration.allowed_origins = ["::1"]
+
+    get "/", headers: { "HOST" => "[::1]", "Origin" => "http://[::1]" }
+    assert_response :method_not_allowed
+  end
+
   test "403 response body is JSON-RPC with no id per MCP spec" do
     post "/", params: { jsonrpc: "2.0", id: "test-1", method: "initialize", params: {} }.to_json,
          headers: {
