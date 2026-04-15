@@ -32,6 +32,21 @@ module ActionMCP
 
     delegate :session_data, to: :session, allow_nil: true
 
+    # Returns true when the current client advertises the MCP Apps UI extension
+    # (`capabilities.extensions["io.modelcontextprotocol/ui"]` in the initialize
+    # request). Returns false when there is no session, no stored capabilities,
+    # or the extension key is absent. Never raises.
+    #
+    # We check key presence rather than value truthiness. An empty hash under
+    # the extension key still counts as "supported". The spec requires
+    # `mimeTypes` inside the value (ext-apps apps.mdx, Client<>Server Capability
+    # Negotiation section), but validating that payload is not this helper's
+    # responsibility.
+    def client_supports_ui?
+      extensions = session&.client_capabilities&.dig("extensions")
+      extensions.is_a?(Hash) && extensions.key?("io.modelcontextprotocol/ui")
+    end
+
     # use _capability_name or default_capability_name
     def self.capability_name
       _capability_name || default_capability_name

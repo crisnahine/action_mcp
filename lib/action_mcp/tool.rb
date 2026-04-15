@@ -187,6 +187,45 @@ module ActionMCP
         end
       end
 
+      # Declares that this tool renders an MCP Apps UI resource. Host reads
+      # `_meta.ui.resourceUri` from the tool listing and renders the referenced
+      # `ui://` resource in a sandboxed iframe. See ext-apps apps.mdx.
+      #
+      # @param resource_uri [String] URI starting with `ui://`
+      # @param visibility [Array<Symbol, String>, nil] subset of [:model, :app].
+      #   When omitted, no visibility key is emitted and the host applies the
+      #   spec default.
+      def renders_ui(resource_uri, visibility: nil)
+        unless resource_uri.is_a?(String) && resource_uri.match?(%r{\Aui://\S+\z})
+          raise ArgumentError,
+                "renders_ui requires a String URI starting with ui://, got: #{resource_uri.inspect}"
+        end
+
+        ui_meta = { resourceUri: resource_uri }
+
+        if visibility
+          unless visibility.is_a?(Array) && !visibility.empty?
+            raise ArgumentError,
+                  "renders_ui visibility must be a non-empty Array, got: #{visibility.inspect}"
+          end
+
+          normalized = visibility.map(&:to_s)
+          invalid = normalized - %w[model app]
+          unless invalid.empty?
+            raise ArgumentError,
+                  "renders_ui visibility values must be one of model, app - got: #{invalid.inspect}"
+          end
+          if normalized.uniq != normalized
+            raise ArgumentError,
+                  "renders_ui visibility contains duplicates: #{visibility.inspect}"
+          end
+
+          ui_meta[:visibility] = normalized
+        end
+
+        self._meta = _meta.merge(ui: ui_meta)
+      end
+
       # Marks this tool as requiring consent before execution
       def requires_consent!
         self._requires_consent = true
