@@ -11,6 +11,11 @@ module ActionMCP
     include JSONRPC_Rails::ControllerHelpers
     include ActionController::Instrumentation
 
+    # MCP spec (Streamable HTTP, Security): validate Origin header on every request
+    # to prevent DNS rebinding attacks. Non-browser clients (Claude Desktop, curl, etc.)
+    # don't send Origin at all — those are always allowed.
+    before_action :verify_origin
+
     # Provides the ActionMCP::Session for the current request.
     # Handles finding existing sessions via header/param or initializing a new one.
     # Specific controllers/handlers might need to enforce session ID presence based on context.
@@ -311,6 +316,42 @@ module ActionMCP
       rescue JSON::ParserError, StandardError
         nil
       end
+    end
+
+    # Validates the Origin header to prevent DNS rebinding attacks per the MCP spec.
+    # Absent Origin is allowed (non-browser clients never send it).
+    # Present Origin must match either config.action_mcp.allowed_origins or the server's own host.
+    def verify_origin
+      origin = request.headers["Origin"]
+      return unless origin.present?
+      return if origin_allowed?(origin)
+
+      render json: { jsonrpc: "2.0", id: nil, error: { code: -32_600, message: "Forbidden: invalid Origin header" } },
+             status: :forbidden
+    end
+
+    def origin_allowed?(origin)
+      return false if origin == "null"
+
+      uri = URI.parse(origin)
+      return false unless uri.host.present?
+
+      allowed = ActionMCP.configuration.allowed_origins
+      if allowed.present?
+        allowed.any? do |pattern|
+          case pattern
+          when Regexp then pattern.match?(uri.host)
+          when String then uri.host.casecmp?(pattern)
+          end
+        end
+      else
+        # Default: origin host must match the server's own host.
+        # This stops cross-origin browser requests (the DNS rebinding vector) while
+        # allowing same-host origins regardless of scheme or port.
+        uri.host.casecmp?(request.host)
+      end
+    rescue URI::InvalidURIError
+      false
     end
 
     # Authenticates the request using the configured gateway

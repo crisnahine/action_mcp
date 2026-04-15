@@ -9,8 +9,7 @@ Rails.application.configure do
   # Eager load code on boot.
   config.eager_load = true
 
-  # Show full error reports.
-  config.consider_all_requests_local = true
+  config.consider_all_requests_local = false
 
   # Cache store
   config.cache_store = :null_store

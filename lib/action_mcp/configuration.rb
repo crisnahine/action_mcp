@@ -50,7 +50,9 @@ module ActionMCP
                   # --- Allowed identity keys for gateway ---
                   :allowed_identity_keys,
                   # --- JSON-RPC Path ---
-                  :base_path
+                  :base_path,
+                  # --- Origin validation (DNS rebinding protection) ---
+                  :allowed_origins
 
     def initialize
       @logging_enabled = false
@@ -96,6 +98,9 @@ module ActionMCP
 
       # Path for JSON-RPC endpoint
       @base_path = "/"
+
+      # Allowed origins for DNS rebinding protection (nil = derive from request.host)
+      @allowed_origins = nil
     end
 
     def name
