@@ -1282,6 +1282,14 @@ For comprehensive client documentation, including examples, session management, 
 - **Implement proper authorization** in your tools and prompts
 - **Validate all inputs** using property definitions and Rails validations
 - **Use consent management** for sensitive operations
+- **Protect against DNS rebinding** using Rails' built-in host authorization. Set `config.hosts` in your environment config to restrict which `Host` headers are accepted. The MCP spec requires servers to reject requests with invalid `Origin` headers (HTTP 403); Rails' `ActionDispatch::HostAuthorization` covers this at the framework level:
+
+  ```ruby
+  # config/environments/production.rb
+  config.hosts = ["api.example.com"]
+  ```
+
+  For local development with browser-based MCP clients, Rails already allows `localhost` by default. See the [Rails host authorization guide](https://guides.rubyonrails.org/configuring.html#actiondispatch-hostauthorization) for details.
 
 ### Performance
 
