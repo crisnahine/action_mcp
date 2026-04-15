@@ -46,6 +46,7 @@ module ActionMCP
     end
 
     initializer "action_mcp.insert_middleware" do |app|
+      config.middleware.use ActionDispatch::HostAuthorization, app.config.hosts if app.config.hosts.present?
       config.middleware.use JSONRPC_Rails::Middleware::Validator, [ ActionMCP.configuration.base_path ].compact.freeze
     end
 
