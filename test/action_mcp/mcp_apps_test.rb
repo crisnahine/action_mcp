@@ -72,7 +72,7 @@ module ActionMCP
       content = response.contents.first
       assert_equal ActionMCP::MIME_TYPE_APP_HTML, content.mime_type
       refute_empty content.text
-      assert content._meta[:ui][:prefersBorder]
+      assert content.meta[:ui][:prefersBorder]
     end
   end
 end

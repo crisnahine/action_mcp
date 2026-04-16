@@ -64,7 +64,7 @@ class WeatherDashboardTemplate < ApplicationMCPResTemplate
       self.class.uri_template,
       ActionMCP::MIME_TYPE_APP_HTML,
       text: HTML,
-      _meta: {
+      meta: {
         ui: {
           csp: { connectDomains: %w[api.openweathermap.org] },
           prefersBorder: true
