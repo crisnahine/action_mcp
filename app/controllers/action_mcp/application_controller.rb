@@ -11,10 +11,8 @@ module ActionMCP
     include JSONRPC_Rails::ControllerHelpers
     include ActionController::Instrumentation
 
-    # MCP spec (Streamable HTTP, Security): validate Origin header on every request
-    # to prevent DNS rebinding attacks. Non-browser clients (Claude Desktop, curl, etc.)
-    # don't send Origin at all — those are always allowed.
-    before_action :verify_origin
+    # Origin validation is enforced by ActionMCP::Middleware::OriginValidation
+    # (see engine.rb) so invalid requests are rejected before routing.
 
     # Provides the ActionMCP::Session for the current request.
     # Handles finding existing sessions via header/param or initializing a new one.
@@ -316,49 +314,6 @@ module ActionMCP
       rescue JSON::ParserError, StandardError
         nil
       end
-    end
-
-    # Validates the Origin header to prevent DNS rebinding attacks per the MCP spec.
-    # Absent Origin is allowed (non-browser clients never send it).
-    # Present Origin must match either config.action_mcp.allowed_origins or the server's own host.
-    def verify_origin
-      origin = request.headers["Origin"]
-      return unless origin.present?
-      return if origin_allowed?(origin)
-
-      # id must be nil here per the MCP spec: Origin validation fires before the
-      # request body is parsed, so there is no request id to echo back.
-      render json: { jsonrpc: "2.0", id: nil, error: { code: -32_600, message: "Forbidden: invalid Origin header" } },
-             status: :forbidden
-    end
-
-    def origin_allowed?(origin)
-      return false if origin == "null"
-
-      uri = URI.parse(origin)
-      return false unless uri.host.present?
-
-      # URI.parse wraps IPv6 addresses in brackets: "http://[::1]" → host "[::1]".
-      # Normalize both sides so allowed_origins entries like "::1" match correctly.
-      origin_host = uri.host.delete_prefix("[").delete_suffix("]")
-
-      allowed = ActionMCP.configuration.allowed_origins
-      if allowed.present?
-        allowed.any? do |pattern|
-          case pattern
-          when Regexp then pattern.match?(origin_host)
-          when String then origin_host.casecmp?(pattern.delete_prefix("[").delete_suffix("]"))
-          end
-        end
-      else
-        # Default: origin host must match the server's own host.
-        # This stops cross-origin browser requests (the DNS rebinding vector) while
-        # allowing same-host origins regardless of scheme or port.
-        server_host = request.host.delete_prefix("[").delete_suffix("]")
-        origin_host.casecmp?(server_host)
-      end
-    rescue URI::InvalidURIError
-      false
     end
 
     # Authenticates the request using the configured gateway
